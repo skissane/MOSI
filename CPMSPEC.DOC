@@ -1,0 +1,253 @@
+
+
+
+
+
+
+               IEEE 855 (MOSI) INTERFACE FOR CP/M
+                         SPECIFICATION
+
+                        James D. Mooney
+             Dept. of Statistics & Computer Science
+                    West Virginia University
+                      Morgantown, WV 26506
+
+
+
+
+                              GENERAL
+
+    This  specification  describes the WVU CP/M MOSI Interface, V
+1.0.  This interface  implements  the  MOSI  "Simple  Development
+Support"  Configuration,  as  specified  in Section 11.2.2 of the
+Standard.  This Configuration  includes  the  following  Modules:
+Simple  Memory  Management,  Synchronous File I/O, Single Process
+Management, System Characteristics, Direct Argument  Acquisition,
+Default Exception  Handler,  and  Single  Exception  Handler.  In
+addition, the I/O Assignments Module is included.  All  functions
+in each of these eight modules are implemented.
+
+
+
+                    SIMPLE MEMORY MANAGEMENT
+
+    Simple   Memory   Management  is  implemented  as  full  heap
+allocation, with an allocation unit of 1 byte, using a first  fit
+algorithm.   The  boundaries  of the heap must be provided during
+initialization and must remain static throughout the program.
+
+
+
+                      SYNCHRONOUS FILE I/O
+
+    The Synchronous File I/O Module provides  uniform  access  to
+CP/M files.    The drive code in file names is considered to be a
+directory name, and the current drive is the  current  directory.
+Several  standard  CP/M  devices can be accessed through the same
+mechanism using special names:
+
+        TRM:    Terminal or Console (unbuffered)
+        CON:    Terminal or Console (buffered)
+        LST:    List Device
+        RDR:    Reader
+        PUN:    Punch
+
+The implementation translates access to these  devices  into  the
+appropriate BDOS calls.
+
+    The interface  supports  creation  of TEMPORARY FILES.  These
+files will be created on the current disk and will have names  of
+the  format  "$$MOSIxx.$$$", where xx represents successive digit
+pairs in the range 00 through 99.
+
+    TEXT FILES are supported and may be  processed  with  a  text
+line considered  to  be  a  variable length record.  In this case
+lines are assumed to be delimited  by  a  CR-LF  character  pair.
+Exact  end-of-file  may  be  detected  and  established  for text
+files.
+
+    A maximum of eight files may be connected at the  same  time.
+A  buffer of 128 bytes is permanently allocated for each of these
+files.
+
+    Default access control is  established  upon  connection  for
+each category of CP/M file as follows:
+
+        READ-ONLY FILE:         Read, Execute, Change, Exclusive
+        READ-WRITE FILE:        Read, Write, Delete, Extend,
+                                    Execute, Change, Exclusive
+        TRM:, CON:              Read, Write, Extend, Change,
+                                    Exclusive
+        RDR:                    Read, Change, Exclusive
+        LST:, PUN:              Write, Extend, Change, Exclusive
+
+    The  interface  supports  sequential  file  organization  for
+devices,  and  sequential  or  direct  organization  for   files.
+Directory organization is not supported.
+
+    Record  Organization  of  Stream  or  Fixed Length Records is
+supported for all devices and files.  For fixed  length  records,
+the  record size specified upon OPEN is used, since files have no
+intrinsic record  structure.    Variable   length   records   are
+supported for TEXT files only.
+
+    All  MOSI  access  methods  are supported for the appropriate
+file organizations.  All file  access  is  performed  using  MOSI
+random access BDOS calls only.
+
+    The  remainder  of  this  section  discusses  the behavior of
+specific functions.
+
+CONNECT:  Will fail if eight files are already connected.
+
+CREATE:  The initial size is ignored.  Device names  may  not  be
+used.
+
+EXTEND, TRUNCATE:    These  functions  are  accepted  but have no
+effect.
+
+OPEN:  The expected record size is accepted as the actual  record
+size for  fixed-length  record  files.    If  this value is zero,
+variable-length records are assumed.  The efficient-size  is  128
+for files,  and  1  for  devices.   This function performs a CP/M
+OPEN operation.
+
+CLOSE:  Performs a CP/M Close operation.    The  final  block  is
+completed and  written  to  disk.  This block will be filled with
+the byte value 1A(hex)  for  text  files,  or  the  value  0  for
+non-text files.
+
+READ:   Reads  from  the  current position using CP/M random file
+access.  Detects exact end-of-file for text files, regardless  of
+record organization.    Can  detect  end-of-file  only  on  block
+boundaries for non-text files.
+
+WRITE:  Writes to the current position  using  CP/M  random  file
+access.   May  implicitly  increase  the  file  size  if "Extend"
+Access Permission is specified.
+
+SEEK:  Performs a seek to the specified record.  For files  using
+sequential  access  modes, seeks must be forward and not past the
+end-of-file position.      For   devices,    and    files    with
+variable-length  record  organization,  seeks  are  permitted  to
+end-of-file only.  A seek may cause the current block of data  to
+be written if it has been modified.
+
+
+
+GET_ACCESS_CONTROL:   Determines the permanent access control for
+a file or  device.    The  identities  supported  are  owner  and
+public.  The same information is returned for both.
+
+CHANGE_ACCESS_CONTROL:   Establishes a new set of access controls
+for a device or file, which will be remembered until the file  is
+disconnected.   May  cause the "read-only" flag of a CP/M file to
+be changed.  After disconnection, access  controls  resume  their
+default values.    Both owner and public identities are accepted,
+but a change will be made only if the identity is owner.
+
+GET_WORKING_DIRECTORY:  Returns the name of the current drive.
+
+SET_WORKING_DIRECTORY:  Changes the current  drive  to  the  name
+specified, if valid.
+
+
+
+
+                   SINGLE PROCESS MANAGEMENT
+
+    INITIALIZE_PROGRAM   requires  non-standard  input  items  to
+specify the start and  end  locations  of  the  heap  for  memory
+management.   This  information is to be provided by the language
+interface  and  is  normally   invisible   to   the   application
+programmer.  A process id of zero is always returned.
+
+    TERMINATE_PROGRAM  ensures  that  all  files  are  closed and
+disconnected.  It then performs a warm boot of CP/M.
+
+
+
+
+                     SYSTEM CHARACTERISTICS
+
+    The System Name is returned as "CP/M-80 2.2".    The  Version
+Id is  "WVU  1.00".    The System Serial Number is not supported,
+and returns a null string.  The GMT-difference is not  supported,
+and returns zero.      Other   values   are:     MOSI-Standard=0,
+Configuration-Code = 2, Bits-Byte = 8,  and  Bits-Address-Unit=8.
+
+
+
+
+                  DIRECT ARGUMENT ACQUISITION
+
+    The  CP/M  command  line  is  extracted  from  its buffer and
+parsed into a command  and  a  set  of  arguments.    As  in  CCP
+conventions,  arguments  are  sequences  of  non-blank characters
+separated by blanks.   There  are  two  additional  rules:    (1)
+Commas  may  be  used  together  with  or  instead  of  blanks as
+argument separators;  (2) Any sequence of characters enclosed  in
+double  quotes, even with embedded blanks and commas, is a single
+argument.  Within a quoted argument, two double quotes  represent
+one actual double quote.
+
+    The    remaining    argument    count    is    returned    by
+GET_ARGUMENT_COUNT,  and  the  next  argument  is   returned   by
+GET_ARGUMENT.   No  attempt  is  made  to  interpret  any  of the
+argument strings.
+
+
+
+
+                        I/O ASSIGNMENTS
+
+    GET_IO_ASSIGNMENTS  returns  a  fixed  assignment  table   as
+follows:
+
+        Standard Input          CON:
+        Standard Output         CON:
+        Error Input             TRM:
+        Error Output            TRM:
+        Terminal Input          TRM:
+        Terminal Output         TRM:
+        Printer Output          LST:
+
+All devices  are indicated as being unconnected.  The information
+returned by this function does NOT change, even  if  the  program
+later connects or opens these devices.
+
+    Note  that  GET_IO_ASSIGNMENTS  does not presently detect the
+use of a SUBMIT file as a source of standard input, even if  XSUB
+is active.
+
+    CHANGE_IO_ASSIGNMENTS always    returns   an   error.      No
+assignments may be changed.
+
+
+
+
+                   DEFAULT EXCEPTION HANDLER
+
+    Exception  Class  values  1  through  3  are   accepted   and
+distinguished.
+
+
+
+
+                    SINGLE EXCEPTION HANDLER
+
+    Exception  class  values  of  1-3 and subclasses of 0-255 are
+accepted.  RAISE_EXCEPTION  supplies  the  address  of  the  user
+handler, if   any,   to  the  language  interface.    It  is  the
+responsibility of that interface to process the  exception.    If
+the  default  handler  is  specified,  the  function  displays  a
+message on the terminal and performs a warm boot to CP/M.
+
+    Nested  exceptions  (raising  an  exception  from  within  an
+exception handler)  are  not allowed.  GET_EXCEPTION_CODE returns
+the active class and subclass if called from  within  a  handler,
+or zero otherwise.
+
+    EXIT_FROM_HANDLER  displays  a  message  and  performs a warm
+boot, if abort was specified.
+

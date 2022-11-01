@@ -1,0 +1,212 @@
+;;;	MCPMMACS - Macros for MOSI/CPM Interface
+;
+;	Jim Mooney
+;	Last Edit: August 15, 1984
+
+;;	MSTRING - format a MOSI string
+mstring	macro	text
+	local	tstart,tend
+	db	tend-tstart
+tstart:
+	db	text
+tend:
+	endm
+
+;;	SYSCALL - call a BDOS function
+syscall	macro	fcode
+	mvi	c,fcode
+	call	BDOS
+	endm
+
+
+;;	GETW - Get Word to HL
+getw:	macro	loc
+	lhld	loc
+	endm
+
+;;	GETWI - Get Word Immediate to HL
+getwi:	macro	val
+	lxi	h,val
+	endm
+
+;;	GETWX - Get Word Indirect to HL
+
+getwx:	macro	ptr,offset
+	if not nul ptr
+	  lhld	ptr
+	endif
+	if not nul offset
+	  lxi	d,offset
+	  dad	d
+	endif
+	mov	e,m
+	inx	h
+	mov	d,m
+	xchg
+	endm
+
+;;	PUTW - Put Word from HL
+
+putw:	macro	loc
+	shld	loc
+	endm
+
+;;	PUTWX - Put Word Indirect from HL
+
+putwx:	macro	ptr,offset
+	push	h
+	lhld	ptr
+	if not nul offset
+	  lxi	d,offset
+	  dad	d
+	endif
+	pop	d
+	mov	m,e
+	inx	h
+	mov	m,d
+	endm
+
+;;	COPYW - Copy Word from SRC to DEST
+
+copyw:	macro	src,dest
+	lhld	src
+	shld	dest
+	endm
+
+;;	ADDW - Add word to HL
+
+addw:	macro	loc
+	xchg
+	lhld	loc
+	dad	d
+	endm
+
+;;	ADDWI - Add word immediate to HL
+
+addwi:	macro	val
+	lxi	d,val
+	dad	d
+	endm
+
+;;	ADDWX - Add word indirect to HL
+addwx:	macro	ptr,offset
+	push	h
+	lhld	ptr
+	if not nul offset
+	  lxi	d,offset
+	  dad	d
+	endif
+	mov	e,m
+	inx	h
+	mov	d,m
+	pop	h
+	dad	d
+	endm
+
+;;	SUBW - Subtract word from HL
+subw:	macro	loc
+	xchg
+	lhld	loc
+	xchg
+	call	@cpsb16
+	endm
+
+;;	SUBWI - Subtract word immediate from HL
+subwi:	macro	val
+	lxi	d,val
+	call	@cpsb16
+	endm
+
+;;	SUBWX - Subtract word indirect from HL
+subwx:	macro	ptr,offset
+	push	h
+	lhld	ptr
+	if not nul offset
+	  lxi	b,offset
+	  dad	b
+	endif
+	mov	e,m
+	inx	h
+	mov	d,m
+	pop	h
+	call	@cpsb16
+	endm
+
+;;	CMPW - Compare word with HL
+cmpw:	macro	loc
+	xchg
+	lhld	loc
+	xchg
+	call	@cpcm16
+	endm
+
+;;	CMPWI - Compare word immediate with HL
+cmpwi:	macro	val
+	lxi	d,val
+	call	@cpcm16
+	endm
+
+;;	CMPWX - Compare word indirect with HL
+cmpwx:	macro	ptr,offset
+	push	h
+	lhld	ptr
+	if not nul offset
+	  lxi	b,offset
+	  dad	b
+	endif
+	mov	e,m
+	inx	h
+	mov	d,m
+	pop	h
+	call	@cpcm16
+	endm
+
+;;	SUBROUTINES
+
+gmacsubs macro
+
+;;	@CPSB16 - Subtract, 16 bit
+
+@cpsb16:
+	mov	a,l
+	sub	e
+	mov	l,a
+	mov	a,h
+	sbb	d
+	mov	h,a
+	ret
+
+;;	@CPCM16 - Compare, 16 bit
+
+@cpcm16:
+	mov	a,d
+	xra	h	;are signs different?
+	jm	cmp16d	;yes
+	mov	a,l	;unsigned - compare low bytes
+	sub	e
+	jz	cmp16e	;equal
+	mov	a,h	;not equal, compare high
+	sbb	d
+	jc	cmp16c	;set carry
+	ori	1	;z=0,c=0,s=b7
+	ret
+cmp16e:
+	mov	a,h
+	sbb	d	;sets flags appropriately
+	ret
+cmp16d:
+	mov	a,l
+	sub	e
+	mov	a,h
+	sbb	d
+	mov	a,h
+	jc	cmp16c	;set carry
+	ori	1	;z=0,c=0,s=b7
+	ret
+cmp16c:
+	ori	1
+	stc		;z=0,c=1,s=b7
+	ret
+
+	endm
+

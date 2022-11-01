@@ -1,0 +1,510 @@
+
+
+
+
+
+
+               IEEE 855 (MOSI) INTERFACE PACKAGE
+                   for CP/M-80 and Pascal MT+
+
+                        James D. Mooney
+             Dept. of Statistics & Computer Science
+                    West Virginia University
+                      Morgantown, WV 26506
+
+    This  package  contains an experimental implementation of the
+IEEE 855 (MOSI) standard interface  for  CP/M-80.    MOSI  is  an
+acronym for  Microprocessor  Operating  System  Interface.    The
+purpose of the MOSI Standard  is  to  define  a  set  of  "system
+calls,"  referred  to  as  FUNCTIONS,  which  can be invoked from
+various high-level languages by application programs designed  to
+be portable across various operating systems.
+
+    The  MOSI  standard,  under  development since 1980, has been
+approved by the IEEE  Standards  Board  for  TRIAL  USE  as  IEEE
+855-1985.   The  trial  period  for  this  standard extends until
+1987.  During this period,  potential  users  are  encouraged  to
+study  and  experiment  with the standard, and to submit comments
+to help in establishing its final form.
+
+    I have been a participant in the MOSI Working Group for  most
+of  its  lifetime,  and have recently become the Chairman of that
+group.  I thus have a vested interest in the development  of  the
+final version  of  this  standard.    This package is intended to
+help that process by serving both as a usable  implementation  in
+its  own  right and as a model for additional implementations for
+other languages and systems.
+
+
+
+                    ABOUT THE MOSI STANDARD
+
+    The MOSI Standard defines about 75 functions, specifying  for
+each  the  effect  to be achieved and the nature of the arguments
+to be passed and returned.  It is NOT  intended  to  specify  the
+hardware  details  of  data  representation or parameter passing,
+nor to define a  file  system  or  the  actual  structure  of  an
+operating system.
+
+    The   standard  itself  is  independent  of  any  programming
+language.   However,  a   series   of   appendices   suggest   an
+appropriate  format for invoking the functions in several popular
+languages, treating them in all cases as external subprograms.
+
+    The MOSI  functions  are  divided  into  seven  major  groups
+called CAPABILITIES.   These groups are:  Memory Management, Time
+Management,   Data   Transfer,   Process   Management,    Process
+Synchronization    and    Communication,   Interface   with   the
+Environment, and Exception Handling.  The Capabilities, in  turn,
+are  divided into 19 MODULES each consisting of a small number of
+functions.  Since the scope  and  purpose  of  various  operating
+systems  differs  greatly,  a  system  conforming  to MOSI is not
+required to   implement   all   functions.        Rather,    each
+implementation  will  consist  of  a  suitable  set  of  modules.
+Several different sets suitable for particular application  types
+are suggested by the standard.
+
+    The  MOSI  standard  cannot  be  adequately  described in the
+limited space of this document.    The  standard  itself  can  be
+obtained  from  the  IEEE[1],  and  a  copy  is  a  necessity for
+prospective users or  implementors.    An  article  describing  a
+draft  version  of  the standard has been published in IEEE MICRO
+Magazine[2].  A Technical Report,  describing  the  standard  and
+discussing  methods  for  its  implementation  and  use,  is also
+available[3].
+
+    An implementation of a MOSI interface, in the context  of  an
+existing  operating  system  and  compiler,  consists  of  an  OS
+interface  and  a  language  interface  which  usually  will   be
+distinct.   The  OS  interface uses the available system services
+to  implement  functions  defined  by  MOSI  as  efficiently   as
+possible,   using   data  representations  and  parameter-passing
+conventions  suitable  to  the  machine  architecture   and   the
+operating system.    The  language interface, in turn, uses these
+functions to implement  procedures  callable  from  a  high-level
+programming language.    The  interface  supplied in this package
+consists  of  an  OS  interface  for  CP/M-80,  and  a   language
+interface for the Digital Research Pascal-MT+ compiler.
+
+
+
+                    THE CP/M IMPLEMENTATION
+
+    The  major  portion  of this package consists of an operating
+system interface for CP/M 2.2.   This  implementation  is  usable
+with any  8-bit processor (Z-80, 8080, or 8085).  It does require
+CP/M 2.2 and will not work with earlier versions.  The  operating
+system  interface requires about 8K bytes of memory, including 1K
+of file buffers.  The Pascal MT+ interface,  described  in  later
+sections, requires  an  additional  2K.    To  some  extent these
+interfaces substitute for comparable routines in  the  language's
+run-time system.
+
+    The  components  of  the  interface  are  coded  in  assembly
+language for  the  Digital  Research  RMAC   assembler.      This
+assembler  produces  relocatable  object files in the "Microsoft"
+format.  A special program called  MODREL  (also  included  here)
+was  used  to modify these object files to retain symbol names of
+up to 7 characters, although RMAC normally truncates all  symbols
+to 6  characters.   Other assemblers could be used, provided that
+they produce relocatable object files which can  be  linked  with
+the compiled application programs.
+
+    The CP/M  interface  supports  seven  MOSI  modules.   SINGLE
+PROCESS MANAGEMENT provides required functions to initialize  and
+terminate a  program.  SYSTEM CHARACTERISTICS provides a function
+which  returns  information  about  the  characteristics  of  the
+operating system being run.
+
+    MEMORY  MANAGEMENT  provides  a general mechanism for dynamic
+allocation using a heap.  DIRECT  ARGUMENT  ACQUISITION  provides
+access  to  the  command  line arguments typed when a program was
+invoked.  I/O  ASSIGNMENTS  provides  a  method  for  identifying
+special  I/O  channels such as the terminal or printer, which can
+then be accessed using file I/O functions.    EXCEPTION  HANDLING
+provides  a  system  for  trapping run-time errors and exceptions
+raised by the program.
+
+    SYNCHRONOUS FILE I/O provides a  powerful  set  of  functions
+for file  access  and  file  management.   These functions extend
+considerably the  file  handling  capabilities  of  CP/M  without
+requiring any  changes  to  the  file system itself.  Some of the
+extensions include consistent treatment  of  files  and  devices,
+stream  and  record-oriented  access  methods, full random access
+support,   various   categories   of   access   permission,   and
+end-of-line processing   for  text  files.    Included  are  such
+typical functions as OPEN, CLOSE, CREATE,  DELETE,  READ,  WRITE,
+SEEK,  and  RENAME,  plus  others  concerned with access control,
+status information, and establishing the "current directory."
+
+    In the present version, eight file buffers of 128 bytes  each
+are  permanently  allocated,  allowing  a  maximum  of eight open
+files.  As an  alternative,  these  buffers  could  be  allocated
+dynamically  using  the memory management functions, but this has
+not been done so far.
+
+    Each  MOSI  module  is  provided  as  a  separately  compiled
+program module.   It is intended that only those modules actually
+used need to be loaded by a particular application.
+
+    Each   MOSI   implementation   should   be   provided    with
+documentation    which    provides    an    interpretation    for
+implementation-defined    information    and    specifies     any
+limitations.   This documentation is provided in the accompanying
+file CPMSPEC.DOC.
+
+
+
+                    THE PASCAL MT+ INTERFACE
+
+    For  each  programming  language  to   be   used   for   MOSI
+applications  with a given operating system interface, a language
+interface  must  be  provided  which  is  matched  to  both   the
+recommended  interface  in  that  language  and  the details of a
+specific compiler.  The language  interface  provided  with  this
+package  is  designed  for  the Pascal Language, and specifically
+for the Pascal MT+ compiler distributed by Digital Research.
+
+    The specific compiler version for  which  this  interface  is
+designed is  Pascal MT+ for CP/M-80, version 5.6.1.  It cannot be
+guaranteed to work with other versions,  although  the  necessary
+changes should be minor.
+
+    The   Pascal  MT+  interface  implements  MOSI  functions  as
+procedure calls, following the recommended  format  described  in
+Appendix D  of  the  standard.   Only those functions provided by
+the CP/M interface are implemented.
+
+    For most  functions  there  is  a  one-to-one  correspondence
+between  the  parameters  defined in the MOSI interface and those
+in the recommended Pascal syntax.  The  data  representation  and
+parameter passing  conventions,  however, are different.  Most of
+the interface functions share  a  set  of  table-driven  routines
+whose main  purpose  is  to  convert parameters.  A few functions
+require specialized code in the MT+ interface itself.
+
+    MOSI memory management can be  used  with  a  given  compiler
+only  if  conflicts  with  the  built-in memory management can be
+resolved.  In this interface the routines which  implement  "new"
+and  "dispose"  have been changed to use the memory management of
+the CP/M interface, so there is only one heap.    WARNING:    The
+interface  believes the original boundaries of the heap area, and
+does not notice if these boundaries  are  changed.    At  present
+this  means  that recursive programs, which expand the stack area
+into the heap area, may not work properly.  The problem does  not
+arise in  non-recursive  programs.  It should not be difficult to
+modify the run-time routines which change  the  stack  boundaries
+(@LNK and @ULK) to resolve this problem.
+
+    The  only  other  module  which  is  not  straightforward  is
+exception handling.     The   Pascal-MOSI   convention   supports
+exception  handling  by  requiring a procedure in the application
+program with a specific name and format.  A  default  version  of
+this  procedure is provided for programs which do not include one
+of their own.  Exceptions  that  can  be  processed  are  of  two
+types:   those  explicitly  raised  by  the program, and run-time
+errors which cause calls to the  MT+  procedure  @ERR.    In  the
+latter   case   the   interface  provides  the  equivalent  of  a
+User-supplied  handler  as  described  in  the  MT+  Programmer's
+Guide.   Unfortunately, not all run-time errors that are supposed
+to invoke this routine actually do so.
+
+    The interface should be adaptable to other Pascal  compilers,
+and also  serve  as  a  model  for  other languages.  A necessary
+requirement is that  the  compiler  produce  code  which  can  be
+linked  to  separate assembly-language modules viewed as external
+procedures.  In addition, an understanding of  how  the  compiler
+handles  memory  management  and run-time error processing may be
+necessary to make the interface as complete as possible.
+
+
+
+                      SAMPLE APPLICATIONS
+
+    Several sample MOSI  application  programs  are  included  in
+this distribution.     These  programs  are  provided  as  Pascal
+source, and may be run by compiling them and  linking  them  with
+the supplied MOSI library as described below.
+
+    MTSTMAIN   and   MTSTSFIO  are  low-level  menu  driven  test
+programs.   MTSTSFIO  exercises  the  File  I/O  functions,   and
+MTSTMAIN  exercises  the  other  functions of the CP/M interface.
+These programs are not designed for convenient use  of  the  MOSI
+functions,  but  for  detailed control which allows exercising as
+many aspects of each function as possible.
+
+    APPMTYPE and APPMPRNT  are  demonstration  MOSI  applications
+which  TYPE  a  file on the terminal (like the CP/M TYPE command)
+and PRINT a file on the printer.  To use each of these, type  the
+command name  followed  by  a  file  name.  The file name will be
+prompted for if it is not supplied.
+
+    APPMCPYT is a program which makes a copy of a  file,  assumed
+to  be  a  text file and processed in variable-length record mode
+(by lines).  The source and destination file should be  given  as
+the first  and  second  arguments.   They will be prompted for if
+missing.  Device names may be used  for  either  or  both  files.
+Reasonable  error processing is included, and the user is queried
+for several possible options  if  the  destination  file  already
+exists.
+
+    Finally,   the  MODREL  program  itself  makes  use  of  MOSI
+functions, although it was not  written  with  portability  as  a
+goal.  This program is described in the file MODREL.DOC.
+
+
+
+                           PACKAGING
+
+    Both  the CP/M interface and the Pascal MT+ interface consist
+of a collection of modules written in assembly language  for  the
+RMAC assembler.   A common set of macros in the file MCPMMACS.LIB
+is shared by all these routines.
+
+    The interface components are partitioned in such a  way  that
+there  is a main module for each level, a separate program module
+for each MOSI module, and several  support  modules.    The  MOSI
+modules  are  intended  to  be  partitioned  so  that  only those
+
+
+
+actually needed by an application must  be  loaded.    This  will
+save  some  space,  although  in practice the File I/O module, by
+far the largest, is almost always needed.
+
+    The compiled modules are organized into a library  which  can
+be searched   by   the  MT+  linker,  LINKMT.    The  library  is
+constructed from individual relocatable object modules using  the
+library  builder  LIBMT+,  also  a part of the Pascal MT+ system.
+The file MOSIPLIB.BLD is a  list  of  files  which  serves  as  a
+script for    LIBMT+.      The   completed   library   is   named
+MOSIPLIB.ERL.
+
+    Before being placed in the library,  the  relocatable  object
+files  produced  by RMAC for the various interface components are
+processed by the MODREL program.  This program restores  the  7th
+character  of symbols which was truncated by RMAC, using the .SYM
+file for reference.    See  the  description  in  MODREL.DOC  for
+further details.
+
+    The  components  of the CP/M interface in the library include
+a  series  of  "dummy"  modules  which   contain   initialization
+routines;   these  must  be loaded when the matching full modules
+are not needed.  The components of the Pascal  interface  include
+the  default exception handler, and also include several routines
+which  may  substitute  for  routines  in  the  regular   library
+PASLIB.   All  of  these  items  will  automatically be loaded as
+needed,  but  their  order   in   the   library   is   important.
+Furthermore,   the  MOSIPLIB  library  must  be  searched  before
+PASLIB.
+
+    To support  the  writing  of  application  programs,  several
+files  are  provided  which contain Pascal declarations useful in
+MOSI programs.    These   declarations   may   be   included   in
+application programs   as   required.      MOSICDCL.PAS  contains
+constant declarations, while MOSITDCL contains all the MOSI  type
+declarations.    A   collection   of   MOSI   external  procedure
+declarations is  also  provided.    This  collection,   in   file
+MOSIPDCL,  includes  declarations for all of the MOSI procedures,
+not only  those  supported  by  the  CP/M   interface.      These
+declarations  are  supplied  in a single file on the distribution
+disk to save space.  They should  be  divided  up  into  separate
+files,  one  for  each  module,  so  that  only  the declarations
+actually needed are included.
+
+    In addition to the above, the file MOSISUBS.PAS is  provided,
+containing  procedures  to  support  the input and output of MOSI
+strings and  long  integers.    These  procedures  may  also   be
+included in application programs.
+
+    On  the  distribution  disk,  some  of  the  files  have been
+compressed by the public domain SQ (Squeeze) program.  These  are
+recognized  by the letter Q as the second letter of the file type
+name, e.g., MCPMSFIO.AQM.  To recover  the  original  content  of
+these  files,  process  them  with  the  USQ  (unsqueeze) program
+provided.
+
+
+
+                        USEFUL COMMANDS
+
+    This section illustrates the commands needed to  process  and
+use various  components  of  the  interface.  It assumes that the
+components of the RMAC and  Pascal  MT+  systems  have  not  been
+changed,  and  that  all  files  are present on the current disk.
+Assembler and compiler options are not discussed.
+
+To UNSQUEEZE a file:
+
+        USQ filename
+   or   USQ X: filename
+
+NOTE: The filename may include wildcard characters.  The file(s)
+will be reconstructed with their original size and content.  There
+must, of course, be sufficient space available.  The optional
+drive code parameter X: will route the output to the specified
+destination disk.
+
+To assemble an interface component:
+
+        RMAC filename
+
+NOTE: After assembly, correct the resulting REL file using MODREL.
+See the description in MODREL.DOC for further information.
+
+        MODREL filename
+
+
+To build the object library:
+
+        LIBMT+ MOSIPLIB
+
+This procedure uses MOSIPLIB.BLD to direct the process.  It is necessary
+after any change to any of the interface files.  All of the listed
+REL files must be available.
+
+
+To compile a MOSI application program:
+
+        MTPLUS filename
+
+
+To link an application program and produce a COM file:
+
+        LINKMT filename,MOSIPLIB/S,PASLIB/S
+
+If other libraries are needed, such as FPREALS (used by the test program
+MTSTSFIO), they should be listed after MOSIPLIB but before PASLIB:
+
+        LINKMT MTSTSFIO,MOSIPLIB/S,FPREALS/S,PASLIB/S
+
+
+
+
+                          FILE SUMMARY
+
+    This section lists the files included in this distribution.
+
+
+
+DOCUMENTATION:
+
+        MOSICPM.DOC     This document
+        CPMSPEC.DOC     Specification for the CP/M MOSI implementation
+        MODREL.DOC      Usage for the MODREL program
+
+CP/M INTERFACE:
+
+        Main interface control and function modules, RMAC source.
+
+        MCPMMACS.LIB    Common macros (also used in MT+ interface)
+        MCPMMAIN.ASM    Main interface module
+        MCPMMMGS.ASM    Memory Management
+        MCPMSFIO.ASM    Synchronous File I/O
+        MCPMSPMG.ASM    Single Process Management
+        MCPMSYSC.ASM    System Characteristics
+        MCPMARGD.ASM    Direct Argument Acquisition
+        MCPMIOAS.ASM    I/O Assignments
+        MCPMEXCH.ASM    Exception Handling
+
+        Support modules, including dummy initialization routines
+        for modules not otherwise required, RMAC source.
+
+        MCPMSFBM.ASM    Static File Buffer Management
+        MCPMIMEM.ASM    Dummy Memory Management
+        MCPMIFIL.ASM    Dummy File I/O
+        MCPMIARG.ASM    Dummy Argument Acquisition
+	MCPMIIOA.ASM	Dummy I/O Assignments
+        MCPMIEXH.ASM    Dummy Exception Handling
+
+PASCAL MT+ INTERFACE:
+
+        Main interface control and function modules, RMAC source.
+
+        MPASMAIN.ASM    Main interface module, with
+                          Single Process Management
+        MPASMMGT.ASM    Memory Management
+        MPASSFIO.ASM    Synchronous File I/O
+        MPASSYSC.ASM    System Characteristics
+        MPASARGD.ASM    Direct Argument Acquisition
+        MPASIOAS.ASM    I/O Assignments
+        MPASEXCH.ASM    Exception Handling
+
+APPLICATION SUPPORT:
+
+        Files to be included as needed in application source programs.
+
+        MOSICDCL.PAS    Constant declarations
+        MOSITDCL.PAS    Type declarations
+        MOSIPDCL.PAS    Combined procedure declarations
+        MOSISUBS.PAS    Useful procedures for I/O support
+
+        Default Exception Handler to be linked with applications
+        which do not define their own.
+
+        MPOSEXCH.PAS    Default Exception Handler
+
+TEST AND DEMONSTRATION APPLICATIONS:
+
+        Low-level test programs to exercise each function.
+
+        MTSTCOMM.PAS    Common Subroutines
+        MTSTMAIN.PAS    Test Program, non file I/O
+        MTSTSFIO.PAS    Test Program, file I/O
+
+        Demonstration application programs.
+
+        APPMTYPE.PAS    Demo, type a file
+        APPMPRNT.PAS    Demo, Print a file
+        APPMCPYT.PAS    Demo, Copy text files
+
+
+MISCELLANEOUS:
+
+        MOSIPLIB.BLD    "Build" file for object library
+        MOSIPLIB.ERL    MOSI Pascal object library
+        MODREL.PAS      MODREL, Pascal source
+        USQ.COM         Unsqueeze program
+
+
+
+
+                          A FINAL WORD
+
+    In the process  of  developing  the  final  version  of  this
+standard,  the working group needs to know of your experience and
+hear your comments.  We  are  especially  interested  in  hearing
+about  actual  implementations,  in  progress  or  complete,  and
+experience with such implementations.  I will do what  I  can  to
+assist   implementors   and   experimentors  with  any  problems.
+Comments and questions may be  directed  to  me  at  the  address
+given above.    Formal  comments  may  also  be  directed  to the
+Secretary, IEEE Standards Board, as described in the standard.
+
+    All files and documentation on this distribution disk may  be
+freely copied,  used  and  modified  for  any  purpose.   I would
+appreciate hearing promptly of  any  bugs  that  are  discovered.
+Executable  program  versions have not been included both to save
+space and to avoid including copyrighted portions of  the  Pascal
+MT+ run time library.
+
+    CP/M,  RMAC, PASCAL MT+, LINKMT, and LIBMT+ are trademarks of
+Digital Research, Inc.
+
+
+
+                           REFERENCES
+
+  1.  Microprocessor Operating System Interface Standard,
+      IEEE 855-1985 (Trial Use), available from IEEE Service
+      Center, 445 Hoes Lane, Piscataway, NJ 08854.
+
+  2.  Jackson, D., and J. Cowan.  The Proposed IEEE 855
+      Microprocessor Operating Systems Interface Standard.
+      IEEE Micro Magazine, Vol 4, No. 4, Aug. 1984, pp. 63-71.
+
+  3.  Mooney, J.  The MOSI Standard for Operating System Interfaces:
+      Implementation and Use.  TR 85-1, Dept. of Statistics and
+      Computer Science, West Virginia Univ., Morgantown WV 26506.
+
+

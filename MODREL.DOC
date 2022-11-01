@@ -1,0 +1,98 @@
+
+
+
+
+
+                          MODREL V1.0
+                          User's Guide
+
+                        James D. Mooney
+             Dept. of Statistics & Computer Science
+                    West Virginia University
+                      Morgantown, WV 26506
+
+
+
+
+                          DESCRIPTION
+
+    MODREL  (version  1.0)  is  a  program to recover the seventh
+character in  external  symbol  names  in  a  "MicroSoft  format"
+relocatable object file.
+
+    Although  the  MicroSoft object file format can support seven
+character  names,  all  external  names  are  truncated  to   six
+characters  in  the  REL  files  produced by the Digital Research
+RMAC assembler.  In contrast, other programs such as  Pascal  MT+
+generate external  names  of  up to seven characters.  Because of
+this difference, seven-character names intended  to  be  commonly
+referenced  by a Pascal MT+ program and an RMAC assembly language
+program will not be properly resolved.
+
+    Although RMAC truncates names to  six  characters  in  object
+files,  it produces a SYM file for debugging purposes which lists
+the definition of external symbols, retaining  the  seventh  name
+character.   MODREL reads both the REL file and the SYM file, and
+uses the symbol information to generate a modified  REL  file  in
+which   the   seventh  character  of  external  symbol  names  is
+restored.
+
+    MODREL is written in Pascal  for  the  Pascal  MT+  compiler.
+The  program  conforms  to  the  IEEE  855-1985  (trial use) MOSI
+standard.
+
+
+
+                             USAGE
+
+    To use MODREL, ensure that both the REL object file  and  the
+SYM  symbol  file  for  the program to be modified, from the same
+RMAC execution, are present  on  the  same  disk  drive.    These
+should    have   the   names   filename.REL   and   filename.SYM,
+respectively.  Run the program by typing:
+
+     A>MODREL filename
+
+where  "filename"  is  the  name  of  your   file   WITHOUT   any
+extension.  A  drive specifier may be included.  The program will
+process  the  file  to  completion,  placing  its  output  in   a
+temporary file   named   filename.$$$.      When   processing  is
+successfully completed, the original REL file is deleted and  the
+output file  is  renamed  to  filename.REL.    The  SYM  file  is
+unchanged.
+
+
+
+                        AMBIGUOUS NAMES
+
+    If a program contains two or more external  names  which  are
+identical  over  the  first  six  characters,  an  ambiguous case
+exists.   It  may  not  be  possible  to  determine  the   proper
+extension of  the  truncated  names in the REL file.  MODREL V1.0
+detects and reports such ambiguities, but  does  not  change  the
+symbol name.   The program could be modified to allow interactive
+correction in such cases.
+
+
+
+                        MODREL AND MOSI
+
+    MODREL is  a  useful  development  tool  for  the  MOSI  CP/M
+interface, version  WVU  1.00.    It  is  also  a MOSI-conforming
+program which makes use of some MOSI  functions  although  it  is
+not designed  for maximum portability.  Specifically, MODREL uses
+MOSI facilities to access command line arguments, read and  write
+files,  and  delete  and  rename files at the end of a successful
+run.
+
+
+
+                              NOTE
+
+    MicroSoft is a trademark of MicroSoft.  RMAC and  Pascal  MT+
+are trademarks  of Digital Research, Inc.  The REL file format is
+described  in  the  Digital  Research  Publication  "Programmer's
+Utilities  Guide for the CP/M Family of Operating Systems," First
+Edition, Sept. 1982, pp. 246-248.    This  document  is  supplied
+with the RMAC assembler.
+
